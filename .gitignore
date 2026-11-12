@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+
+# Los videos no se suben al repositorio
+*.mp4
+*.mkv
+*.webm
+*.mov
+*.m4a
+*.mp3
