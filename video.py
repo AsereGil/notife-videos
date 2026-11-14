@@ -57,7 +57,7 @@ def duracion_de(video: Path) -> float:
 
 
 def descargar(url: str, carpeta: Path, avisar=print) -> Path:
-    """Descarga un video de YouTube en la carpeta indicada y devuelve su ruta."""
+    """Descarga un video (YouTube, Facebook, etc.) en la carpeta indicada y devuelve su ruta."""
     try:
         import yt_dlp
     except ImportError:
@@ -98,7 +98,7 @@ def descargar(url: str, carpeta: Path, avisar=print) -> Path:
         opciones["format"] = "best[ext=mp4]/best"
         avisar("Aviso: sin ffmpeg el video se descarga en calidad limitada.")
 
-    avisar("Conectando con YouTube...")
+    avisar("Conectando con el sitio del video...")
     try:
         with yt_dlp.YoutubeDL(opciones) as ydl:
             info = ydl.extract_info(url, download=True)

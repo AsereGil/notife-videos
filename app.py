@@ -1,5 +1,5 @@
 """
-Videos para el noticiero: descarga un video de YouTube (o usa uno de la computadora)
+Videos para NotiFE: descarga un video de YouTube o Facebook (o usa uno de la computadora)
 y arma un resumen con segmentos al azar.
 
 Para abrir la ventana: doble clic en iniciar.bat  (o:  python app.py)
@@ -22,7 +22,7 @@ CARPETA_INICIAL = Path.home() / "Downloads" / "YouTube"
 class Ventana(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Videos para el noticiero")
+        self.title("Videos para NotiFE")
         self.minsize(620, 560)
         self.mensajes = queue.Queue()
         self.ultima_carpeta = None
@@ -49,7 +49,7 @@ class Ventana(tk.Tk):
         origen = ttk.LabelFrame(marco, text="1. Video de origen", padding=10)
         origen.grid(row=0, column=0, sticky="ew")
         origen.columnconfigure(0, weight=1)
-        ttk.Label(origen, text="Enlace de YouTube:").grid(row=0, column=0, sticky="w")
+        ttk.Label(origen, text="Enlace del video (YouTube o Facebook):").grid(row=0, column=0, sticky="w")
         ttk.Entry(origen, textvariable=self.enlace).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(2, 8))
         ttk.Label(origen, text="...o un video que ya está en esta computadora:").grid(row=2, column=0, sticky="w")
         ttk.Entry(origen, textvariable=self.archivo).grid(row=3, column=0, sticky="ew", pady=2)
@@ -140,7 +140,7 @@ class Ventana(tk.Tk):
         enlace = self.enlace.get().strip()
         archivo = self.archivo.get().strip().strip('"')
         if not enlace and not archivo:
-            messagebox.showwarning("Falta el video", "Pega un enlace de YouTube o elige un video de la computadora.")
+            messagebox.showwarning("Falta el video", "Pega un enlace de YouTube o Facebook, o elige un video de la computadora.")
             return
         if not enlace and not self.hacer_resumen.get():
             messagebox.showwarning("Nada que hacer", "Elegiste un video local sin resumen. Activa el resumen o pega un enlace.")
