@@ -56,8 +56,10 @@ def duracion_de(video: Path) -> float:
         raise ErrorHerramienta(f"No pude leer la duración de: {video.name}")
 
 
-def descargar(url: str, carpeta: Path, avisar=print) -> Path:
-    """Descarga un video (YouTube, Facebook, etc.) en la carpeta indicada y devuelve su ruta."""
+def descargar(url: str, carpeta: Path, avisar=print, solo_audio: bool = False) -> Path:
+    """Descarga un video (YouTube, Facebook, etc.) en la carpeta indicada y devuelve su ruta.
+
+    Con solo_audio=True guarda únicamente el sonido, en MP3."""
     try:
         import yt_dlp
     except ImportError:
@@ -91,7 +93,14 @@ def descargar(url: str, carpeta: Path, avisar=print) -> Path:
         "progress_hooks": [progreso],
         "logger": Registro(),
     }
-    if hay_ffmpeg:
+    if solo_audio:
+        if not hay_ffmpeg:
+            raise ErrorHerramienta("Para guardar solo el audio se necesita ffmpeg. Ejecuta instalar.bat.")
+        opciones["format"] = "bestaudio/best"
+        opciones["postprocessors"] = [
+            {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}
+        ]
+    elif hay_ffmpeg:
         opciones["format"] = "bestvideo+bestaudio/best"
         opciones["merge_output_format"] = "mp4"
     else:
@@ -109,8 +118,29 @@ def descargar(url: str, carpeta: Path, avisar=print) -> Path:
             f"No se pudo descargar: {error}\n"
             "Si el enlace es correcto, ejecuta instalar.bat para actualizar yt-dlp e intenta de nuevo."
         )
-    avisar(f"Descargado: {Path(ruta).name}")
-    return Path(ruta)
+    ruta = Path(ruta)
+    if solo_audio and not ruta.exists() and ruta.with_suffix(".mp3").exists():
+        ruta = ruta.with_suffix(".mp3")
+    avisar(f"Descargado: {ruta.name}")
+    return ruta
+
+
+def extraer_audio(video: Path, avisar=print) -> Path:
+    """Guarda en MP3 el sonido de un video que ya está en la computadora."""
+    if not video.is_file():
+        raise ErrorHerramienta(f"No encontré el archivo: {video}")
+    salida = video.with_suffix(".mp3")
+    contador = 2
+    while salida.exists():
+        salida = video.with_name(f"{video.stem}_{contador}.mp3")
+        contador += 1
+    avisar("Extrayendo el audio...")
+    _ejecutar(
+        ["ffmpeg", "-v", "error", "-y", "-i", str(video), "-vn", "-map", "0:a:0",
+         "-c:a", "libmp3lame", "-b:a", "192k", str(salida)]
+    )
+    avisar(f"Audio listo: {salida.name}")
+    return salida
 
 
 def crear_resumen(video: Path, duracion: float = 180, segmento: float = 10,

@@ -23,13 +23,14 @@ class Ventana(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Videos para NotiFE")
-        self.minsize(620, 560)
+        self.minsize(620, 600)
         self.mensajes = queue.Queue()
         self.ultima_carpeta = None
 
         self.enlace = tk.StringVar()
         self.archivo = tk.StringVar()
         self.carpeta = tk.StringVar(value=str(CARPETA_INICIAL))
+        self.solo_audio = tk.BooleanVar(value=False)
         self.hacer_resumen = tk.BooleanVar(value=True)
         self.duracion = tk.StringVar(value="180")
         self.segmento = tk.StringVar(value="10")
@@ -60,8 +61,12 @@ class Ventana(tk.Tk):
         destino.columnconfigure(0, weight=1)
         ttk.Entry(destino, textvariable=self.carpeta).grid(row=0, column=0, sticky="ew")
         ttk.Button(destino, text="Cambiar...", command=self._elegir_carpeta).grid(row=0, column=1, padx=(6, 0))
+        ttk.Checkbutton(destino, text="Solo audio: guardar únicamente el sonido en MP3 (sin video ni resumen)",
+                        variable=self.solo_audio, command=self._alternar_audio).grid(
+            row=1, column=0, columnspan=2, sticky="w", pady=(8, 0))
 
         resumen = ttk.LabelFrame(marco, text="3. Resumen con segmentos al azar", padding=10)
+        self.marco_resumen = resumen
         resumen.grid(row=2, column=0, sticky="ew", pady=(10, 0))
         ttk.Checkbutton(resumen, text="Armar resumen (si no, solo se descarga el video)",
                         variable=self.hacer_resumen).grid(row=0, column=0, columnspan=4, sticky="w")
@@ -94,6 +99,15 @@ class Ventana(tk.Tk):
         barra_v = ttk.Scrollbar(caja, command=self.registro.yview)
         barra_v.grid(row=0, column=1, sticky="ns")
         self.registro.configure(yscrollcommand=barra_v.set)
+
+    def _alternar_audio(self):
+        """Con 'solo audio' no hay resumen: se desactivan esas opciones."""
+        estado = "disabled" if self.solo_audio.get() else "normal"
+        for control in self.marco_resumen.winfo_children():
+            try:
+                control.configure(state=estado)
+            except tk.TclError:
+                pass
 
     def _elegir_archivo(self):
         ruta = filedialog.askopenfilename(
@@ -142,7 +156,7 @@ class Ventana(tk.Tk):
         if not enlace and not archivo:
             messagebox.showwarning("Falta el video", "Pega un enlace de YouTube o Facebook, o elige un video de la computadora.")
             return
-        if not enlace and not self.hacer_resumen.get():
+        if not enlace and not self.hacer_resumen.get() and not self.solo_audio.get():
             messagebox.showwarning("Nada que hacer", "Elegiste un video local sin resumen. Activa el resumen o pega un enlace.")
             return
         try:
@@ -154,7 +168,8 @@ class Ventana(tk.Tk):
 
         trabajo = {
             "enlace": enlace, "archivo": archivo, "carpeta": Path(self.carpeta.get().strip()),
-            "resumen": self.hacer_resumen.get(), "duracion": duracion, "segmento": segmento,
+            "solo_audio": self.solo_audio.get(),
+            "resumen": self.hacer_resumen.get() and not self.solo_audio.get(), "duracion": duracion, "segmento": segmento,
             "sin_audio": self.sin_audio.get(), "mezclar": self.mezclar.get(),
         }
         self.boton.configure(state="disabled")
@@ -166,10 +181,12 @@ class Ventana(tk.Tk):
         avisar = lambda texto: self.mensajes.put(("texto", texto))
         try:
             if t["enlace"]:
-                origen = video.descargar(t["enlace"], t["carpeta"], avisar)
+                origen = video.descargar(t["enlace"], t["carpeta"], avisar, solo_audio=t["solo_audio"])
             else:
                 origen = Path(t["archivo"])
             resultado = origen
+            if t["solo_audio"] and not t["enlace"]:
+                resultado = video.extraer_audio(origen, avisar)
             if t["resumen"]:
                 avisar("Armando el resumen...")
                 resultado = video.crear_resumen(

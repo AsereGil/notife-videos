@@ -3,7 +3,8 @@
 Herramienta de escritorio para preparar video de fondo de NotiFE:
 
 1. **Descarga** un video de YouTube o Facebook a partir de su enlace (o usa un video que ya esté en la computadora).
-2. **Arma un resumen** con segmentos tomados al azar de distintas partes del video, por ejemplo 3 minutos en cortes de 10 segundos, con o sin sonido.
+2. **Guarda solo el audio** en MP3, si no necesitas el video.
+3. **Arma un resumen** con segmentos tomados al azar de distintas partes del video, por ejemplo 3 minutos en cortes de 10 segundos, con o sin sonido.
 
 Todo corre en tu computadora; no se sube nada a ningún servidor.
 
@@ -19,7 +20,7 @@ Necesitas Windows 10 u 11 y [Python](https://www.python.org/downloads/) (al inst
 
 1. Doble clic en **`iniciar.bat`**.
 2. Pega el enlace del video (YouTube o Facebook), o elige un video de tu computadora.
-3. Ajusta la duración total, la duración de cada segmento y si lo quieres sin sonido.
+3. Si solo quieres el sonido, marca **Solo audio**. Si quieres resumen, ajusta la duración total, la duración de cada segmento y si lo quieres sin sonido.
 4. Presiona **Comenzar**. Al terminar, usa **Abrir carpeta del resultado**.
 
 El video descargado se guarda en `Descargas\YouTube` (se puede cambiar) y el resumen queda junto a él con `_resumen` al final del nombre. Cada vez que lo ejecutas sale una selección distinta de segmentos.
