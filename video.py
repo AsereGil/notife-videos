@@ -87,7 +87,9 @@ def descargar(url: str, carpeta: Path, avisar=print, solo_audio: bool = False) -
         def error(self, msg): pass
 
     opciones = {
-        "outtmpl": str(carpeta / "%(title)s.%(ext)s"),
+        # Título recortado a 80 caracteres: en Facebook el "título" es toda la publicación
+        # y Windows rechaza nombres de archivo tan largos.
+        "outtmpl": str(carpeta / "%(title).80s.%(ext)s"),
         "noplaylist": True,
         "windowsfilenames": True,
         "progress_hooks": [progreso],
