@@ -18,12 +18,20 @@ import video
 
 CARPETA_INICIAL = Path.home() / "Downloads" / "YouTube"
 
+# Texto de la lista -> altura máxima en pixeles (None = sin límite)
+CALIDADES = {
+    "720p (recomendada, archivos ligeros)": 720,
+    "480p (más ligera)": 480,
+    "1080p (alta definición)": 1080,
+    "Máxima disponible (archivos muy pesados)": None,
+}
+
 
 class Ventana(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Videos para NotiFE")
-        self.minsize(620, 600)
+        self.minsize(620, 640)
         self.mensajes = queue.Queue()
         self.ultima_carpeta = None
 
@@ -31,6 +39,7 @@ class Ventana(tk.Tk):
         self.archivo = tk.StringVar()
         self.carpeta = tk.StringVar(value=str(CARPETA_INICIAL))
         self.solo_audio = tk.BooleanVar(value=False)
+        self.calidad = tk.StringVar(value=list(CALIDADES)[0])
         self.hacer_resumen = tk.BooleanVar(value=True)
         self.duracion = tk.StringVar(value="180")
         self.segmento = tk.StringVar(value="10")
@@ -64,6 +73,11 @@ class Ventana(tk.Tk):
         ttk.Checkbutton(destino, text="Solo audio: guardar únicamente el sonido en MP3 (sin video ni resumen)",
                         variable=self.solo_audio, command=self._alternar_audio).grid(
             row=1, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        fila_calidad = ttk.Frame(destino)
+        fila_calidad.grid(row=2, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        ttk.Label(fila_calidad, text="Calidad máxima de descarga:").pack(side="left")
+        ttk.Combobox(fila_calidad, textvariable=self.calidad, values=list(CALIDADES),
+                     state="readonly", width=38).pack(side="left", padx=6)
 
         resumen = ttk.LabelFrame(marco, text="3. Resumen con segmentos al azar", padding=10)
         self.marco_resumen = resumen
@@ -74,7 +88,7 @@ class Ventana(tk.Tk):
         ttk.Entry(resumen, textvariable=self.duracion, width=7).grid(row=1, column=1, sticky="w", padx=6, pady=(8, 0))
         ttk.Label(resumen, text="Cada segmento (segundos):").grid(row=1, column=2, sticky="w", padx=(16, 0), pady=(8, 0))
         ttk.Entry(resumen, textvariable=self.segmento, width=7).grid(row=1, column=3, sticky="w", padx=6, pady=(8, 0))
-        ttk.Checkbutton(resumen, text="Sin sonido (también al solo descargar)",
+        ttk.Checkbutton(resumen, text="Sin sonido (descarga y resumen)",
                         variable=self.sin_audio).grid(row=2, column=0, columnspan=2, sticky="w", pady=(8, 0))
         ttk.Checkbutton(resumen, text="Segmentos en orden aleatorio",
                         variable=self.mezclar).grid(row=2, column=2, columnspan=2, sticky="w", padx=(16, 0), pady=(8, 0))
@@ -168,7 +182,7 @@ class Ventana(tk.Tk):
 
         trabajo = {
             "enlace": enlace, "archivo": archivo, "carpeta": Path(self.carpeta.get().strip()),
-            "solo_audio": self.solo_audio.get(),
+            "solo_audio": self.solo_audio.get(), "calidad": CALIDADES.get(self.calidad.get(), 720),
             "resumen": self.hacer_resumen.get() and not self.solo_audio.get(), "duracion": duracion, "segmento": segmento,
             "sin_audio": self.sin_audio.get(), "mezclar": self.mezclar.get(),
         }
@@ -182,7 +196,7 @@ class Ventana(tk.Tk):
         try:
             if t["enlace"]:
                 origen = video.descargar(t["enlace"], t["carpeta"], avisar, solo_audio=t["solo_audio"],
-                                         sin_audio=t["sin_audio"] and not t["resumen"])
+                                         sin_audio=t["sin_audio"], calidad=t["calidad"])
             else:
                 origen = Path(t["archivo"])
             resultado = origen

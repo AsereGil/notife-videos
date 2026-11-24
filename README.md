@@ -20,8 +20,10 @@ Necesitas Windows 10 u 11 y [Python](https://www.python.org/downloads/) (al inst
 
 1. Doble clic en **`iniciar.bat`**.
 2. Pega el enlace del video (YouTube o Facebook), o elige un video de tu computadora.
-3. Si solo quieres el sonido, marca **Solo audio**. Si quieres resumen, ajusta la duración total, la duración de cada segmento y si lo quieres sin sonido.
-4. Presiona **Comenzar**. Al terminar, usa **Abrir carpeta del resultado**.
+3. Elige la **calidad máxima de descarga**. 720p basta para video de fondo y pesa mucho menos que la máxima.
+4. Si solo quieres el sonido, marca **Solo audio**. Con **Sin sonido**, el video se descarga sin pista de audio.
+5. Si quieres resumen, ajusta la duración total y la duración de cada segmento.
+6. Presiona **Comenzar**. Al terminar, usa **Abrir carpeta del resultado**.
 
 El video descargado se guarda en `Descargas\YouTube` (se puede cambiar) y el resumen queda junto a él con `_resumen` al final del nombre. Cada vez que lo ejecutas sale una selección distinta de segmentos.
 

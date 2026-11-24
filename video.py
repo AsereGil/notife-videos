@@ -87,11 +87,12 @@ def quitar_audio(video: Path, avisar=print, reemplazar: bool = False) -> Path:
 
 
 def descargar(url: str, carpeta: Path, avisar=print, solo_audio: bool = False,
-              sin_audio: bool = False) -> Path:
+              sin_audio: bool = False, calidad: int | None = None) -> Path:
     """Descarga un video (YouTube, Facebook, etc.) en la carpeta indicada y devuelve su ruta.
 
     Con solo_audio=True guarda únicamente el sonido, en MP3.
-    Con sin_audio=True guarda el video sin pista de sonido."""
+    Con sin_audio=True guarda el video sin pista de sonido.
+    calidad es la altura máxima en pixeles (720 = 720p); None = la máxima disponible."""
     try:
         import yt_dlp
     except ImportError:
@@ -127,6 +128,8 @@ def descargar(url: str, carpeta: Path, avisar=print, solo_audio: bool = False,
         "progress_hooks": [progreso],
         "logger": Registro(),
     }
+    # Filtro de calidad: si no hay nada dentro del tope, se usa lo que exista
+    tope = f"[height<={int(calidad)}]" if calidad else ""
     if solo_audio:
         if not hay_ffmpeg:
             raise ErrorHerramienta("Para guardar solo el audio se necesita ffmpeg. Ejecuta instalar.bat.")
@@ -136,12 +139,12 @@ def descargar(url: str, carpeta: Path, avisar=print, solo_audio: bool = False,
         ]
     elif sin_audio and hay_ffmpeg:
         # Solo la imagen; si el sitio no la ofrece por separado, se quita el sonido después
-        opciones["format"] = "bestvideo[ext=mp4]/bestvideo/best"
+        opciones["format"] = f"bestvideo{tope}[ext=mp4]/bestvideo{tope}/best{tope}/best"
     elif hay_ffmpeg:
-        opciones["format"] = "bestvideo+bestaudio/best"
+        opciones["format"] = f"bestvideo{tope}+bestaudio/best{tope}/best"
         opciones["merge_output_format"] = "mp4"
     else:
-        opciones["format"] = "best[ext=mp4]/best"
+        opciones["format"] = f"best{tope}[ext=mp4]/best{tope}/best"
         avisar("Aviso: sin ffmpeg el video se descarga en calidad limitada.")
 
     avisar("Conectando con el sitio del video...")
