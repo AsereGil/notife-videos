@@ -3,6 +3,7 @@ Funciones de trabajo de la herramienta: descargar un video y armar un resumen
 con segmentos al azar. No depende de la ventana; app.py la usa.
 """
 
+import os
 import random
 import shutil
 import subprocess
@@ -56,10 +57,41 @@ def duracion_de(video: Path) -> float:
         raise ErrorHerramienta(f"No pude leer la duración de: {video.name}")
 
 
-def descargar(url: str, carpeta: Path, avisar=print, solo_audio: bool = False) -> Path:
+def tiene_audio(video: Path) -> bool:
+    salida = _ejecutar(
+        ["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
+         "-of", "csv=p=0", str(video)]
+    )
+    return bool(salida.strip())
+
+
+def quitar_audio(video: Path, avisar=print, reemplazar: bool = False) -> Path:
+    """Quita el sonido de un video sin recodificar la imagen.
+
+    Por defecto crea una copia con "_sin_sonido" en el nombre; con reemplazar=True
+    sustituye el archivo original."""
+    if not video.is_file():
+        raise ErrorHerramienta(f"No encontré el archivo: {video}")
+    salida = video.with_name(f"{video.stem}_sin_sonido{video.suffix}")
+    contador = 2
+    while salida.exists():
+        salida = video.with_name(f"{video.stem}_sin_sonido_{contador}{video.suffix}")
+        contador += 1
+    avisar("Quitando el sonido...")
+    _ejecutar(["ffmpeg", "-v", "error", "-y", "-i", str(video), "-map", "0:v", "-an", "-c:v", "copy", str(salida)])
+    if reemplazar:
+        os.replace(salida, video)
+        salida = video
+    avisar(f"Video sin sonido: {salida.name}")
+    return salida
+
+
+def descargar(url: str, carpeta: Path, avisar=print, solo_audio: bool = False,
+              sin_audio: bool = False) -> Path:
     """Descarga un video (YouTube, Facebook, etc.) en la carpeta indicada y devuelve su ruta.
 
-    Con solo_audio=True guarda únicamente el sonido, en MP3."""
+    Con solo_audio=True guarda únicamente el sonido, en MP3.
+    Con sin_audio=True guarda el video sin pista de sonido."""
     try:
         import yt_dlp
     except ImportError:
@@ -102,6 +134,9 @@ def descargar(url: str, carpeta: Path, avisar=print, solo_audio: bool = False) -
         opciones["postprocessors"] = [
             {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}
         ]
+    elif sin_audio and hay_ffmpeg:
+        # Solo la imagen; si el sitio no la ofrece por separado, se quita el sonido después
+        opciones["format"] = "bestvideo[ext=mp4]/bestvideo/best"
     elif hay_ffmpeg:
         opciones["format"] = "bestvideo+bestaudio/best"
         opciones["merge_output_format"] = "mp4"
@@ -124,6 +159,11 @@ def descargar(url: str, carpeta: Path, avisar=print, solo_audio: bool = False) -
     if solo_audio and not ruta.exists() and ruta.with_suffix(".mp3").exists():
         ruta = ruta.with_suffix(".mp3")
     avisar(f"Descargado: {ruta.name}")
+    if sin_audio and not solo_audio:
+        if not hay_ffmpeg:
+            raise ErrorHerramienta("Para quitar el sonido se necesita ffmpeg. Ejecuta instalar.bat.")
+        if tiene_audio(ruta):
+            quitar_audio(ruta, avisar, reemplazar=True)
     return ruta
 
 

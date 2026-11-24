@@ -74,7 +74,7 @@ class Ventana(tk.Tk):
         ttk.Entry(resumen, textvariable=self.duracion, width=7).grid(row=1, column=1, sticky="w", padx=6, pady=(8, 0))
         ttk.Label(resumen, text="Cada segmento (segundos):").grid(row=1, column=2, sticky="w", padx=(16, 0), pady=(8, 0))
         ttk.Entry(resumen, textvariable=self.segmento, width=7).grid(row=1, column=3, sticky="w", padx=6, pady=(8, 0))
-        ttk.Checkbutton(resumen, text="Sin sonido (para video de fondo)",
+        ttk.Checkbutton(resumen, text="Sin sonido (también al solo descargar)",
                         variable=self.sin_audio).grid(row=2, column=0, columnspan=2, sticky="w", pady=(8, 0))
         ttk.Checkbutton(resumen, text="Segmentos en orden aleatorio",
                         variable=self.mezclar).grid(row=2, column=2, columnspan=2, sticky="w", padx=(16, 0), pady=(8, 0))
@@ -156,8 +156,8 @@ class Ventana(tk.Tk):
         if not enlace and not archivo:
             messagebox.showwarning("Falta el video", "Pega un enlace de YouTube o Facebook, o elige un video de la computadora.")
             return
-        if not enlace and not self.hacer_resumen.get() and not self.solo_audio.get():
-            messagebox.showwarning("Nada que hacer", "Elegiste un video local sin resumen. Activa el resumen o pega un enlace.")
+        if not enlace and not self.hacer_resumen.get() and not self.solo_audio.get() and not self.sin_audio.get():
+            messagebox.showwarning("Nada que hacer", "Elegiste un video local sin resumen ni cambios. Activa el resumen, Sin sonido o Solo audio, o pega un enlace.")
             return
         try:
             duracion = float(self.duracion.get().replace(",", "."))
@@ -181,12 +181,15 @@ class Ventana(tk.Tk):
         avisar = lambda texto: self.mensajes.put(("texto", texto))
         try:
             if t["enlace"]:
-                origen = video.descargar(t["enlace"], t["carpeta"], avisar, solo_audio=t["solo_audio"])
+                origen = video.descargar(t["enlace"], t["carpeta"], avisar, solo_audio=t["solo_audio"],
+                                         sin_audio=t["sin_audio"] and not t["resumen"])
             else:
                 origen = Path(t["archivo"])
             resultado = origen
             if t["solo_audio"] and not t["enlace"]:
                 resultado = video.extraer_audio(origen, avisar)
+            elif t["sin_audio"] and not t["resumen"] and not t["enlace"]:
+                resultado = video.quitar_audio(origen, avisar)
             if t["resumen"]:
                 avisar("Armando el resumen...")
                 resultado = video.crear_resumen(
